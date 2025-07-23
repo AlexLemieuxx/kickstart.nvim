@@ -1,19 +1,4 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
+--[[ ===================================================================== ==================== READ THIS BEFORE CONTINUING ==================== ===================================================================== ========                                    .-----.          ======== ========         .----------------------.   | === |          ======== ========         |.-""""""""""""""""""-.|   |-----|          ======== ========         ||                    ||   | === |          ======== ========         ||   KICKSTART.NVIM   ||   |-----|          ======== ========         ||                    ||   | === |          ======== ========         ||                    ||   |-----|          ======== ========         ||:Tutor              ||   |:::::|          ======== ========         |'-..................-'|   |____o|          ======== ========         `"")----------------(""`   ___________      ======== ========        /::::::::::|  |::::::::::\  \ no mouse \     ========
 ========       /:::========|  |==hjkl==:::\  \ required \    ========
 ========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
 ========                                                     ========
@@ -44,7 +29,6 @@ What is Kickstart?
 Kickstart Guide:
 
   TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
     If you don't know what this means, type the following:
       - <escape key>
       - :
@@ -91,9 +75,10 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+vim.g.have_nerd_font = true
 
 -- [[ Setting options ]]
+
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
 --  For more options, you can see `:help option-list`
@@ -102,7 +87,7 @@ vim.g.have_nerd_font = false
 vim.o.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.o.relativenumber = true
+vim.o.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.o.mouse = 'a'
@@ -110,15 +95,49 @@ vim.o.mouse = 'a'
 -- Don't show the mode, since it's already in the status line
 vim.o.showmode = false
 
--- Sync clipboard between OS and Neovim.
---  Schedule the setting after `UiEnter` because it can increase startup-time.
---  Remove this option if you want your OS clipboard to remain independent.
---  See `:help 'clipboard'`
-vim.schedule(function()
-  vim.o.clipboard = 'unnamedplus'
-end)
+-- 5. Override Neovim's clipboard provider
+vim.api.nvim_create_user_command("Reg", function()
+  vim.cmd("registers \"0123456789abcdefghijklmnopqrstuvwxyz:.%#=/")
+end, {})
 
+vim.cmd("cabbrev reg Reg")  -- auto-expands :reg to :Reg
+
+local clip = require("win_clip")
+vim.g.clipboard = {
+  name = "ffi_win_clipboard",
+  copy = {
+    ["+"] = clip.copy,
+    ["*"] = clip.copy,
+  },
+  paste = {
+    ["+"] = clip.paste,
+    ["*"] = clip.paste,
+  },
+  cache_enabled = 0,
+}
+
+-- vim.o.clipboard = ''
+-- vim.g.clipboard = {
+--   name = "win32yank",
+--   copy = {
+--     ["+"] = "win32yank.exe -i --crlf",
+--     ["*"] = "win32yank.exe -i --crlf",
+--   },
+--   paste = {
+--     ["+"] = "win32yank.exe -o --lf" ,
+--     ["*"] = "win32yank.exe -o --lf" ,
+--   },
+--   cache_enabled = false,
+-- }
+-- -- Sync clipboard between OS and Neovim.
+-- --  Schedule the setting after `UiEnter` because it can increase startup-time.
+-- --  Remove this option if you want your OS clipboard to remain independent.
+-- --  See `:help 'clipboard'`
+--
 -- Enable break indent
+
+
+
 vim.o.breakindent = true
 
 -- Save undo history
@@ -132,10 +151,10 @@ vim.o.smartcase = true
 vim.o.signcolumn = 'yes'
 
 -- Decrease update time
-vim.o.updatetime = 250
+vim.o.updatetime = 100
 
 -- Decrease mapped sequence wait time
-vim.o.timeoutlen = 300
+vim.o.timeoutlen = 150
 
 -- Configure how new splits should be opened
 vim.o.splitright = true
@@ -219,11 +238,9 @@ vim.api.nvim_create_autocmd('TextYankPost', {
   end,
 })
 
--- [[ Install `lazy.nvim` plugin manager ]]
---    See `:help lazy.nvim.txt` or https://github.com/folke/lazy.nvim for more info
 local lazypath = vim.fn.stdpath 'data' .. '/lazy/lazy.nvim'
 if not (vim.uv or vim.loop).fs_stat(lazypath) then
-  local lazyrepo = 'https://github.com/folke/lazy.nvim.git'
+  local lazyrepo = 'git@github.com-personal:folke/lazy.nvim.git'
   local out = vim.fn.system { 'git', 'clone', '--filter=blob:none', '--branch=stable', lazyrepo, lazypath }
   if vim.v.shell_error ~= 0 then
     error('Error cloning lazy.nvim:\n' .. out)
@@ -407,12 +424,12 @@ require('lazy').setup({
         -- You can put your default mappings / updates / etc. in here
         --  All the info you're looking for is in `:help telescope.setup()`
         --
-        -- defaults = {
-        --   mappings = {
-        --     i = { ['<c-enter>'] = 'to_fuzzy_refine' },
-        --   },
-        -- },
-        -- pickers = {}
+        defaults = {
+          mappings = {
+            i = { ['<c-enter>'] = 'to_fuzzy_refine' },
+          },
+        },
+        --  pickers = {}
         extensions = {
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
@@ -422,7 +439,7 @@ require('lazy').setup({
 
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
-      pcall(require('telescope').load_extension, 'ui-select')
+      -- defaults = {
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -673,7 +690,7 @@ require('lazy').setup({
       local servers = {
         -- clangd = {},
         -- gopls = {},
-        -- pyright = {},
+        pyright = {},
         -- rust_analyzer = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
@@ -720,7 +737,7 @@ require('lazy').setup({
       require('mason-tool-installer').setup { ensure_installed = ensure_installed }
 
       require('mason-lspconfig').setup {
-        ensure_installed = {}, -- explicitly set to an empty table (Kickstart populates installs via mason-tool-installer)
+        ensure_installed = {}, -- explicitly set to an empty table (  --Kickstart populates installs via mason-tool-installer)
         automatic_installation = false,
         handlers = {
           function(server_name)
@@ -761,7 +778,7 @@ require('lazy').setup({
           return nil
         else
           return {
-            timeout_ms = 500,
+            timeout_ms = 2500,
             lsp_format = 'fallback',
           }
         end
@@ -876,6 +893,23 @@ require('lazy').setup({
     },
   },
 
+  -- {
+  --   'rose-pine/neovim',
+  --   name = 'rose-pine',
+  --   priority = 1000, -- Make sure to load this before all the other start plugins.
+  --   config = function()
+  --     ---@diagnostic disable-next-line: missing-fields
+  --     require('rose-pine').setup {
+  --       vairant = 'auto',
+  --       dark_variant = 'main',
+  --     }
+  --     -- Load the colorscheme here.
+  --     -- Like many other themes, this one has different styles, and you could load
+  --     -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+  --     vim.cmd 'colorscheme rose-pine'
+  --   end,
+  -- },
+
   { -- You can easily change to a different colorscheme.
     -- Change the name of the colorscheme plugin below, and then
     -- change the command in the config to whatever the name of that colorscheme is.
@@ -973,18 +1007,18 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.debug',
+  --   require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
